@@ -1,0 +1,7 @@
+import { eq } from "drizzle-orm";
+import { getAdminAccount } from "../../admin-auth";
+import { getDb } from "../../../db";
+import { users } from "../../../db/schema";
+export async function POST(request:Request){if(!await getAdminAccount())return Response.json({error:"Admin access required"},{status:403});const {name,nic,phone}=await request.json() as Record<string,string>;if(!name?.trim()||!nic?.trim()||!phone?.trim())return Response.json({error:"Name, NIC and phone are required"},{status:400});try{const [teacher]=await getDb().insert(users).values({role:"teacher",name:name.trim(),nic:nic.trim(),phone:phone.trim()}).returning();return Response.json({teacher},{status:201})}catch{return Response.json({error:"NIC already exists"},{status:409})}}
+export async function PATCH(request:Request){if(!await getAdminAccount())return Response.json({error:"Admin access required"},{status:403});const {id,name,nic,phone}=await request.json() as {id:number;name:string;nic:string;phone:string};await getDb().update(users).set({name:name.trim(),nic:nic.trim(),phone:phone.trim()}).where(eq(users.id,id));return Response.json({ok:true})}
+export async function DELETE(request:Request){if(!await getAdminAccount())return Response.json({error:"Admin access required"},{status:403});const {id}=await request.json() as {id:number};await getDb().delete(users).where(eq(users.id,id));return Response.json({ok:true})}
